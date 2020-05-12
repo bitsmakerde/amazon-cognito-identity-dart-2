@@ -18,6 +18,11 @@ import 'cognito_user_pool.dart';
 import 'cognito_user_session.dart';
 import 'date_helper.dart';
 
+enum AuthenticationFlowType {
+  USER_SRP_AUTH,
+  USER_PASSWORD_AUTH
+}
+
 class CognitoUserAuthResult {
   String challengeName;
   String session;
@@ -39,7 +44,7 @@ class CognitoUser {
   String _clientSecretHash;
   CognitoUserPool pool;
   Client client;
-  String authenticationFlowType;
+  AuthenticationFlowType authenticationFlowType;
   String deviceName;
   String verifierDevices;
   CognitoStorage storage;
@@ -60,7 +65,7 @@ class CognitoUser {
       _signInUserSession = signInUserSession;
     }
     client = pool.client;
-    authenticationFlowType = 'USER_SRP_AUTH';
+    authenticationFlowType = AuthenticationFlowType.USER_SRP_AUTH;
 
     storage =
         storage ?? (CognitoStorageHelper(CognitoMemoryStorage())).getStorage();
