@@ -459,6 +459,8 @@ class CognitoUser {
       return await _authenticateUserPlainUsernamePassword(authDetails);
     } else if (authenticationFlowType == 'USER_SRP_AUTH') {
       return await _authenticateUserDefaultAuth(authDetails);
+    } else if (authenticationFlowType == 'CUSTOM_AUTH') {
+      return await _authenticateUserPasswordlessAuth(authDetails);
     }
     throw UnimplementedError('Authentication flow type is not supported.');
   }
@@ -514,6 +516,37 @@ class CognitoUser {
 
     return _authenticateUserInternal(authResult, authenticationHelper);
   }
+
+  Future<CognitoUserSession> _authenticateUserPasswordlessAuth(
+      AuthenticationDetails authDetails) async {
+    final authParameters = {
+      'USERNAME': username
+    };
+
+    final authenticationHelper = AuthenticationHelper(
+      pool.getUserPoolId().split('_')[1],
+    );
+
+    getCachedDeviceKeyAndPassword();
+    if (_deviceKey != null) {
+      authParameters['DEVICE_KEY'] = _deviceKey;
+    }
+
+    final paramsReq = {
+      'AuthFlow': 'CUSTOM_AUTH',
+      'ClientId': pool.getClientId(),
+      'AuthParameters': authParameters,
+      'ClientMetadata': authDetails.getValidationData(),
+    };
+
+    if (getUserContextData() != null) {
+      paramsReq['UserContextData'] = getUserContextData();
+    }
+    final authResult = await client.request('InitiateAuth', paramsReq);
+
+    return _authenticateUserInternal(authResult, authenticationHelper);
+  }
+  
 
   Future<CognitoUserSession> _authenticateUserDefaultAuth(
     AuthenticationDetails authDetails,
